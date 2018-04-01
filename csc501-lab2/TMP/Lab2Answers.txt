@@ -1,0 +1,51 @@
+Question:1.
+PART-1
+Priority boosting:
+This is the solution to handle unbounded priority inversion problem. 
+It is strategy used by the Microsoft Windows. 
+Initially each process/ thread will be given a dynamic priority which will be 
+equal to base priority. This priority will be used by the scheduler to determine 
+which process should execute. Later the dynamic priority will be boosted or lowered 
+by the operating system to make sure that they are responsive and no process will be stopped for processor. 
+Also this protocol make sures that priority of higher priority threads/process are not boosted only lower priority threads are boosted.
+PART-2:
+semaphore time - 1798
+lock time - 1661
+
+
+Priority ceiling:
+This is one of the solution to handle unbounded priority inversion problem. 
+In this solution every mutex lock holds highest priority(ceiling priority) which will be assigned to every process that is trying to access the lock.  
+Priority ceiling is determined by calculating the highest priority of all the process which are holding the lock.
+
+Question:2.
+Here the LOCK_READER allows multiple readers into the try_update then the global_semaphore which is counting semaphore allows 10 concurrent readers 
+into buffer_add function. Here “buffer_t” is the global structure which can be accessed by 10 concurrent readers. Suppose if the two readers tried to 
+execute buffer_add function at the same time then two users may start writing from the same buf+buf->len because the buf_len may not be updated.
+Let me explain the scenario simply using preemption where a lower process reader preempted before updating the buf->len value.
+
+Let  me take two readers RD1 and RD2. RD1 is lower priority and RD2 is higher priority process.since its a counting semaphore when RD1 is preempted then 
+RD2 can execute the same function. So if RD1 starts executing and entered into buffer_add() function. 
+In this function RD1 executed until “memcpy (buf->buf + buf->len, txt, size)” which is 7th line in the function. 
+This line copies the data from txt into buffer from buf->len index. Suppose now a higher priority reader RD2 preempted RD1 then and starts executing 
+it enters buffer_add() function. Since buf->len is not updated by the lower priority reader RD1 this higher priority reader RD2 will override the data written by RD1.
+here buf->len is updated by RD2. After RD1 will start executing which updates the buffer length by its text length. 
+Here buffer length is updated perfectly but the data is written by RD1 is over written by RD2.
+
+RD1:
+buf->len=0;
+text=sri      ___ ___ ___ ___ ___
+   pos=0->>>>|s__|r__|i__|___|___|.........................(size)
+Data copied into buffer but buf->length no updated by RD1.
+
+Now RD2 enetered:
+buf->len=0;
+text=alex   ___ ___ ___ ___ ___ ___ ___
+  pos=0->>>|a__|l__|e__|x__|\0_|___|___|......................(size)
+now buf->len value is 4 and previous data is over written. 
+buf->len=4
+
+Now RD1 enetered:
+buf->len=7 but data inside buffer is inconsistent as shown before.
+
+
